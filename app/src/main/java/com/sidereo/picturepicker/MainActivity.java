@@ -11,6 +11,7 @@ import android.view.MenuItem;
 public class MainActivity extends ActionBarActivity {
 
     RecyclerView recyclerview;
+    PicturePickerAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,6 +22,14 @@ public class MainActivity extends ActionBarActivity {
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        recyclerview.setLayoutManager(layoutManager);
+
+        // allows for optimizations if all items are of the same size:
+        recyclerview.setHasFixedSize(true);
+
+        adapter = new PicturePickerAdapter();
+        recyclerview.setAdapter(adapter);
+
     }
 
 
