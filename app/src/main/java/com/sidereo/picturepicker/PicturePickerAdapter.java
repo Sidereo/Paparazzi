@@ -32,6 +32,11 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     private ImageLoader imageLoader;
     private final DisplayImageOptions imageLoaderOptions;
 
+    private int count;
+
+    private boolean  openCamera;
+    private boolean  openFiles;
+
     private int localPreviews;
     private List<String> localPreviewPaths;
 
@@ -61,6 +66,9 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
             this.localPreviews = paths.length;
         }
         localPreviewPaths = new ArrayList<String>(Arrays.asList(paths));
+
+        openCamera = true;
+        openFiles = true;
     }
 
     @Override
@@ -71,13 +79,35 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
 
     @Override
     public void onBindViewHolder(final ListItemViewHolder viewHolder, int position) {
-        File file = new File(localPreviewPaths.get(position));
-        imageLoader.displayImage(Uri.fromFile(file).toString(), viewHolder.picture, imageLoaderOptions);
+        // Open Camera
+        if (position == 0) {
+            viewHolder.picture.setImageResource(R.drawable.ic_photo_camera_grey600_48dp);
+        }
+        // Open files
+        else if (position == count - 1) {
+            viewHolder.picture.setImageResource(R.drawable.ic_perm_media_grey600_48dp);
+        }
+        // Display recent files
+        else {
+            if (openCamera)
+                position--;
+            File file = new File(localPreviewPaths.get(position));
+            imageLoader.displayImage(Uri.fromFile(file).toString(), viewHolder.picture, imageLoaderOptions);
+        }
     }
 
     @Override
     public int getItemCount() {
-        return localPreviews;
+        int count = localPreviews;
+
+        if (openCamera)
+            count++;
+
+        if (openFiles)
+            count++;
+
+        this.count = count;
+        return count;
     }
 
     public class ListItemViewHolder extends RecyclerView.ViewHolder {
