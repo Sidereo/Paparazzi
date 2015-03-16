@@ -1,5 +1,6 @@
 package com.sidereo.picturepicker;
 
+import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,12 +17,14 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     public static final int DEFAULT_PREVIEW_PICTURE = 10;
 
     private int localPicturesPreview;
+    private Context context;
 
-    PicturePickerAdapter() {
-        this(DEFAULT_PREVIEW_PICTURE);
+    PicturePickerAdapter(Context context) {
+        this(context, DEFAULT_PREVIEW_PICTURE);
     }
 
-    PicturePickerAdapter(int localPicturesPreview) {
+    PicturePickerAdapter(Context context, int localPicturesPreview) {
+        this.context = context;
         if (localPicturesPreview < 0) {
             Log.e(LOG, "Invalid number of previewd pictures.");
             this.localPicturesPreview = DEFAULT_PREVIEW_PICTURE;
@@ -29,6 +32,9 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
             this.localPicturesPreview = localPicturesPreview;
         }
 
+        int maxLocalPicturesPreview = RecentPictureFactory.getMaxAvailablePreview(context);
+        if (this.localPicturesPreview > maxLocalPicturesPreview)
+            this.localPicturesPreview = maxLocalPicturesPreview;
     }
 
     @Override

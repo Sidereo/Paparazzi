@@ -27,7 +27,7 @@ public class MainActivity extends ActionBarActivity {
         // allows for optimizations if all items are of the same size:
         recyclerview.setHasFixedSize(true);
 
-        adapter = new PicturePickerAdapter();
+        adapter = new PicturePickerAdapter(MainActivity.this);
         recyclerview.setAdapter(adapter);
 
     }
