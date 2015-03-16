@@ -1,8 +1,9 @@
 package com.sidereo.picturepicker;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,6 +11,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +29,8 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     public static final int DEFAULT_PREVIEW_PICTURE_NB = 10;
 
     private Context context;
+    private ImageLoader imageLoader;
+    private final DisplayImageOptions imageLoaderOptions;
 
     private int localPreviews;
     private List<String> localPreviewPaths;
@@ -33,6 +41,14 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
 
     PicturePickerAdapter(Context context, int localPicturesPreview) {
         this.context = context;
+        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(context).build();
+        this.imageLoader = ImageLoader.getInstance();
+        this.imageLoader.init(config);
+
+        this.imageLoaderOptions = new DisplayImageOptions.Builder()
+                .showImageOnLoading(new ColorDrawable(Color.TRANSPARENT))
+                .build();
+
         if (localPicturesPreview < 0) {
             Log.e(LOG, "Invalid number of previewed pictures.");
             this.localPreviews = DEFAULT_PREVIEW_PICTURE_NB;
@@ -40,13 +56,10 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
             this.localPreviews = localPicturesPreview;
         }
 
-        int maxLocalPreviews = RecentPictureFactory.getMaxAvailablePreview(context);
-        if (this.localPreviews > maxLocalPreviews)
-            this.localPreviews = maxLocalPreviews;
-
         String[] paths = RecentPictureFactory.getPicturesPath(context, this.localPreviews);
-        if (paths.length != this.localPreviews)
+        if (paths.length != this.localPreviews) {
             this.localPreviews = paths.length;
+        }
         localPreviewPaths = new ArrayList<String>(Arrays.asList(paths));
     }
 
@@ -57,10 +70,9 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     }
 
     @Override
-    public void onBindViewHolder(ListItemViewHolder viewHolder, int position) {
-        String path = localPreviewPaths.get(position);
-        Bitmap bm = BitmapFactory.decodeFile(path);
-        viewHolder.picture.setImageBitmap(bm);
+    public void onBindViewHolder(final ListItemViewHolder viewHolder, int position) {
+        File file = new File(localPreviewPaths.get(position));
+        imageLoader.displayImage(Uri.fromFile(file).toString(), viewHolder.picture, imageLoaderOptions);
     }
 
     @Override
@@ -76,4 +88,5 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
             picture = (ImageView) itemView.findViewById(R.id.picturepicker_item_picture);
         }
     }
+
 }
