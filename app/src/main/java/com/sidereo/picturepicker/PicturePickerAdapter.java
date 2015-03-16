@@ -1,9 +1,12 @@
 package com.sidereo.picturepicker;
 
-import android.content.Context;
+import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -26,9 +29,17 @@ import java.util.List;
 public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdapter.ListItemViewHolder> {
     public static final String LOG = PicturePickerAdapter.class.getSimpleName();
 
+    public static final int SCAN_CAMERA_INTENT = 1986;
+    public static final int SCAN_FILES_INTENT = 1987;
+    public static final String IMAGE_MIME_TYPE = "image/*";
+
+    public static final int CAMERA = 0;
+    public static final int PREVIEW = 1;
+    public static final int FILES = 2;
+
     public static final int DEFAULT_PREVIEW_PICTURE_NB = 10;
 
-    private Context context;
+    private Activity context;
     private ImageLoader imageLoader;
     private final DisplayImageOptions imageLoaderOptions;
 
@@ -40,11 +51,11 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     private int localPreviews;
     private List<String> localPreviewPaths;
 
-    PicturePickerAdapter(Context context) {
+    PicturePickerAdapter(Activity context) {
         this(context, DEFAULT_PREVIEW_PICTURE_NB);
     }
 
-    PicturePickerAdapter(Context context, int localPicturesPreview) {
+    PicturePickerAdapter(Activity context, int localPicturesPreview) {
         this.context = context;
         ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(context).build();
         this.imageLoader = ImageLoader.getInstance();
@@ -72,8 +83,45 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     }
 
     @Override
+    public int getItemViewType(int position) {
+        if (position == 0)
+            return CAMERA;
+            // Open files
+        else if (position == count - 1)
+            return FILES;
+            // Display recent files
+        else
+            return PREVIEW;
+    }
+
+    @Override
     public ListItemViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item, parent, false);
+
+        switch (viewType) {
+            case CAMERA:
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        openCamera();
+                    }
+                });
+                break;
+
+            case FILES:
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        openFiles();
+                    }
+                });
+                openFiles();
+                break;
+
+            case PREVIEW:
+                break;
+        }
+
         return new ListItemViewHolder(itemView);
     }
 
@@ -117,6 +165,19 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
             super(itemView);
             picture = (ImageView) itemView.findViewById(R.id.picturepicker_item_picture);
         }
+    }
+
+    private void openFiles() {
+        final Intent intent = new Intent();
+        intent.setType(IMAGE_MIME_TYPE);
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        context.startActivityForResult(intent, SCAN_FILES_INTENT);
+    }
+
+    private void openCamera() {
+        final Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.putExtra(MediaStore.EXTRA_SCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        context.startActivityForResult(intent, SCAN_CAMERA_INTENT);
     }
 
 }
