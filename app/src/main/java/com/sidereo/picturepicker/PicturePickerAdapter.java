@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
@@ -215,16 +216,26 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
 
                 Cursor cursor = null;
                 try {
-                    if (DocumentsContract.isDocumentUri(context, selectedImage)) {
-                        String wholeImageId = DocumentsContract.getDocumentId(data.getData());
-                        String imageId = wholeImageId.split(":")[1];
+                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                        if (DocumentsContract.isDocumentUri(context, selectedImage)) {
+                            String wholeImageId = DocumentsContract.getDocumentId(data.getData());
+                            String imageId = wholeImageId.split(":")[1];
 
-                        String[] projection = { MediaStore.MediaColumns.DATA };
-                        String whereClause = MediaStore.Images.Media._ID + "=?";
+                            String[] projection = {MediaStore.MediaColumns.DATA};
+                            String whereClause = MediaStore.Images.Media._ID + "=?";
 
-                        cursor = context.getContentResolver().query(RecentPictureFactory.getUri(), projection, whereClause, new String[]{imageId}, null);
+                            cursor = context.getContentResolver().query(RecentPictureFactory.getUri(), projection, whereClause, new String[]{imageId}, null);
+                            if (cursor.moveToFirst()) {
+                                final int columnIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                                filePath = cursor.getString(columnIndex);
+                            }
+                        }
+                    } else {
+                        final String[] filePathColumn = { MediaStore.Images.Media.DATA };
+
+                        cursor = context.getContentResolver().query(selectedImage, filePathColumn, null, null, null);
                         if (cursor.moveToFirst()) {
-                            final int columnIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                            final int columnIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
                             filePath = cursor.getString(columnIndex);
                         }
                     }
