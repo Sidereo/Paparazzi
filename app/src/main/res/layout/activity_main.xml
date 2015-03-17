@@ -20,4 +20,12 @@
 		android:layout_height="@dimen/item_size"
 		android:layout_below="@id/textview"/>
 
+	<ImageView
+		android:id="@+id/selectedPicture"
+		android:layout_width="400dp"
+		android:layout_height="400dp"
+		android:scaleType="centerCrop"
+		android:layout_below="@id/recyclerview"
+		android:src="@drawable/ic_image_grey600_48dp"/>
+
 </RelativeLayout>

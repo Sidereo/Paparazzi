@@ -1,17 +1,25 @@
 package com.sidereo.picturepicker;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import java.io.File;
 
 
 public class MainActivity extends ActionBarActivity {
-
     RecyclerView recyclerview;
     PicturePickerAdapter adapter;
+
+    TextView textView;
+    ImageView selectedImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,6 +27,8 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         recyclerview = (RecyclerView) findViewById(R.id.recyclerview);
+        textView = (TextView) findViewById(R.id.textview);
+        selectedImageView = (ImageView) findViewById(R.id.selectedPicture);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -27,11 +37,27 @@ public class MainActivity extends ActionBarActivity {
         // allows for optimizations if all items are of the same size:
         recyclerview.setHasFixedSize(true);
 
-        adapter = new PicturePickerAdapter(MainActivity.this);
+        OnPictureSelection onPictureSelection = new OnPictureSelection() {
+            @Override
+            public void onPictureSelected(String path) {
+                textView.setText(path);
+                File file = new File(path);
+                if (file.exists()) {
+                    Bitmap bm = BitmapFactory.decodeFile(path);
+                    selectedImageView.setImageBitmap(bm);
+                }
+            }
+
+            @Override
+            public void onPictureUnselected() {
+                textView.setText(R.string.hello_world);
+                selectedImageView.setImageResource(R.drawable.ic_image_grey600_48dp);
+            }
+        };
+        adapter = new PicturePickerAdapter(MainActivity.this, onPictureSelection);
         recyclerview.setAdapter(adapter);
 
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

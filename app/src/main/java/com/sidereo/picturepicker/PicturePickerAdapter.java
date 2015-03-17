@@ -51,19 +51,24 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     private int localPreviews;
     private List<String> localPreviewPaths;
 
-    PicturePickerAdapter(Activity context) {
-        this(context, DEFAULT_PREVIEW_PICTURE_NB);
+    private int selectedPos;
+    private OnPictureSelection onPictureSelection;
+
+    PicturePickerAdapter(Activity context, OnPictureSelection onPictureSelection) {
+        this(context, DEFAULT_PREVIEW_PICTURE_NB, onPictureSelection);
     }
 
-    PicturePickerAdapter(Activity context, int localPicturesPreview) {
+    PicturePickerAdapter(Activity context, int localPicturesPreview, OnPictureSelection onPictureSelection) {
         this.context = context;
+
         ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(context).build();
         this.imageLoader = ImageLoader.getInstance();
         this.imageLoader.init(config);
-
         this.imageLoaderOptions = new DisplayImageOptions.Builder()
                 .showImageOnLoading(new ColorDrawable(Color.TRANSPARENT))
                 .build();
+
+        this.onPictureSelection = onPictureSelection;
 
         if (localPicturesPreview < 0) {
             Log.e(LOG, "Invalid number of previewed pictures.");
@@ -97,31 +102,6 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     @Override
     public ListItemViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item, parent, false);
-
-        switch (viewType) {
-            case CAMERA:
-                itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        openCamera();
-                    }
-                });
-                break;
-
-            case FILES:
-                itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        openFiles();
-                    }
-                });
-                openFiles();
-                break;
-
-            case PREVIEW:
-                break;
-        }
-
         return new ListItemViewHolder(itemView);
     }
 
@@ -158,13 +138,37 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
         return count;
     }
 
-    public class ListItemViewHolder extends RecyclerView.ViewHolder {
+    public class ListItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         ImageView picture;
 
         public ListItemViewHolder(View itemView) {
             super(itemView);
             picture = (ImageView) itemView.findViewById(R.id.picturepicker_item_picture);
+            itemView.setOnClickListener(this);
         }
+
+        @Override
+        public void onClick(View v) {
+            final int pos = getAdapterPosition();
+
+            int viewType = getItemViewType();
+            switch (viewType) {
+                case CAMERA:
+                    openCamera();
+                    break;
+
+                case FILES:
+                    openFiles();
+                    break;
+
+                case PREVIEW:
+                    selectedPos = pos;
+                    if (onPictureSelection != null)
+                        onPictureSelection.onPictureSelected(localPreviewPaths.get(pos - 1));
+                    break;
+            }
+        }
+
     }
 
     private void openFiles() {
