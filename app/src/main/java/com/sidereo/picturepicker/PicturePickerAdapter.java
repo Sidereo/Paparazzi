@@ -1,5 +1,6 @@
 package com.sidereo.picturepicker;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -8,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
@@ -23,8 +25,11 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 
 import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -59,6 +64,8 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
 
     private int selectedPos;
     private OnPictureSelection onPictureSelection;
+
+    private String cameraDestFile;
 
     PicturePickerAdapter(Activity context, OnPictureSelection onPictureSelection) {
         this(context, DEFAULT_PREVIEW_PICTURE_NB, onPictureSelection);
@@ -196,72 +203,144 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     }
 
     private void openCamera() {
+        File destFile = null;
+        try {
+            destFile = createCameraImageFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+            if (onPictureSelection != null)
+                onPictureSelection.onPictureUnselected();
+            return;
+        }
+
         final Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         intent.putExtra(MediaStore.EXTRA_SCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(destFile));
         context.startActivityForResult(intent, SCAN_CAMERA_INTENT);
+    }
+
+    private File createCameraImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "CAMERA_" + timeStamp + "_";
+        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        cameraDestFile = image.getAbsolutePath();
+        return image;
+    }
+
+    private void galleryAddPic() {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        File file = new File(cameraDestFile);
+        Uri contentUri = Uri.fromFile(file);
+        mediaScanIntent.setData(contentUri);
+        context.sendBroadcast(mediaScanIntent);
     }
 
     public void onResult(int requestCode, int resultCode, Intent data) {
 
         if (requestCode == SCAN_CAMERA_INTENT) {
             if (resultCode == Activity.RESULT_OK) {
-
-            }
-        }
-        else if (requestCode == SCAN_FILES_INTENT) {
-            if (resultCode == Activity.RESULT_OK) {
-
-                final Uri selectedImage = data.getData();
-                String filePath = null;
-
-                Cursor cursor = null;
-                try {
-                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                        if (DocumentsContract.isDocumentUri(context, selectedImage)) {
-                            String wholeImageId = DocumentsContract.getDocumentId(data.getData());
-                            String imageId = wholeImageId.split(":")[1];
-
-                            String[] projection = {MediaStore.MediaColumns.DATA};
-                            String whereClause = MediaStore.Images.Media._ID + "=?";
-
-                            cursor = context.getContentResolver().query(RecentPictureFactory.getUri(), projection, whereClause, new String[]{imageId}, null);
-                            if (cursor.moveToFirst()) {
-                                final int columnIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
-                                filePath = cursor.getString(columnIndex);
-                            }
-                        }
-                    } else {
-                        final String[] filePathColumn = { MediaStore.Images.Media.DATA };
-
-                        cursor = context.getContentResolver().query(selectedImage, filePathColumn, null, null, null);
-                        if (cursor.moveToFirst()) {
-                            final int columnIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
-                            filePath = cursor.getString(columnIndex);
-                        }
-                    }
-                } finally {
-                    if (cursor != null) {
-                        cursor.close();
-                    }
-                }
-
-                if (TextUtils.isEmpty(filePath)) {
-                    if (onPictureSelection != null)
-                        onPictureSelection.onPictureUnselected();
-                    return;
-                } else if (filePath.startsWith("content://")) {
-                    if (onPictureSelection != null)
-                        onPictureSelection.onPictureUnselected();
-                    return;
-                }
-
-                if (onPictureSelection != null)
-                    onPictureSelection.onPictureSelected(filePath);
-
+                onCameraResult();
             } else {
                 if (onPictureSelection != null)
                     onPictureSelection.onPictureUnselected();
             }
+        }
+        else if (requestCode == SCAN_FILES_INTENT) {
+            if (resultCode == Activity.RESULT_OK) {
+                onFilesResult(data);
+            } else {
+                if (onPictureSelection != null)
+                    onPictureSelection.onPictureUnselected();
+            }
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    private String getPicturesDocumentsPathFromKitKat(Uri image) {
+        String filePath = null;
+
+        Cursor cursor = null;
+        try {
+            if (DocumentsContract.isDocumentUri(context, image)) {
+                String wholeImageId = DocumentsContract.getDocumentId(image);
+                String imageId = wholeImageId.split(":")[1];
+
+                String[] projection = {MediaStore.MediaColumns.DATA};
+                String whereClause = MediaStore.Images.Media._ID + "=?";
+
+                cursor = context.getContentResolver().query(RecentPictureFactory.getUri(), projection, whereClause, new String[]{imageId}, null);
+
+                if (cursor.moveToFirst()) {
+                    final int columnIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                    filePath = cursor.getString(columnIndex);
+                }
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        return filePath;
+    }
+
+    private void onFilesResult(Intent data) {
+        final Uri selectedImage = data.getData();
+        String filePath = null;
+
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+            filePath = getPicturesDocumentsPathFromKitKat(selectedImage);
+        } else {
+            filePath = getPicturesDocumentsPathBeforeKitKat(selectedImage);
+        }
+
+        if (TextUtils.isEmpty(filePath) || filePath.startsWith("content://")) {
+            if (onPictureSelection != null)
+                onPictureSelection.onPictureUnselected();
+            return;
+        }
+
+        if (onPictureSelection != null)
+            onPictureSelection.onPictureSelected(filePath);
+    }
+
+    private String getPicturesDocumentsPathBeforeKitKat(Uri selectedImage) {
+        String filePath = null;
+
+        Cursor cursor = null;
+        try {
+            final String[] filePathColumn = { MediaStore.Images.Media.DATA };
+
+            cursor = context.getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+            if (cursor.moveToFirst()) {
+                final int columnIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
+                filePath = cursor.getString(columnIndex);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        return filePath;
+    }
+
+    private void onCameraResult() {
+        if (cameraDestFile != null && new File(cameraDestFile).exists()) {
+            if (onPictureSelection != null)
+                onPictureSelection.onPictureSelected(cameraDestFile);
+            galleryAddPic();
+        } else {
+            if (onPictureSelection != null)
+                onPictureSelection.onPictureUnselected();
         }
     }
 
