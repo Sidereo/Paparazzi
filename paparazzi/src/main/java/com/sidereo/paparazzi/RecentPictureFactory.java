@@ -1,4 +1,4 @@
-package com.sidereo.picturepicker;
+package com.sidereo.paparazzi;
 
 import android.content.Context;
 import android.database.Cursor;

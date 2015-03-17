@@ -1,4 +1,4 @@
-package com.sidereo.picturepicker;
+package com.sidereo.paparazzi;
 
 /**
  * Created by sidereo on 16/03/15.

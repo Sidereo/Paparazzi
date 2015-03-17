@@ -1,11 +1,10 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 22
-    buildToolsVersion "21.1.2"
+    buildToolsVersion "22.0.0"
 
     defaultConfig {
-        applicationId "com.sidereo.picturepicker"
         minSdkVersion 15
         targetSdkVersion 22
         versionCode 1
@@ -23,5 +22,6 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:22.0.0'
     compile 'com.android.support:recyclerview-v7:22.0.0'
-    compile project(':paparazzi')
+
+    compile 'com.nostra13.universalimageloader:universal-image-loader:1.9.3'
 }

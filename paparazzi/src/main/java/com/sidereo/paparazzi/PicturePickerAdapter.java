@@ -1,4 +1,4 @@
-package com.sidereo.picturepicker;
+package com.sidereo.paparazzi;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -32,9 +32,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-/**
- * Created by sidereo on 16/03/15.
- */
 public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdapter.ListItemViewHolder> {
     public static final String LOG = PicturePickerAdapter.class.getSimpleName();
 
@@ -67,7 +64,7 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
 
     private String cameraDestFile;
 
-    PicturePickerAdapter(Activity context, OnPictureSelection onPictureSelection) {
+    public PicturePickerAdapter(Activity context, OnPictureSelection onPictureSelection) {
         this(context, DEFAULT_PREVIEW_PICTURE_NB, onPictureSelection);
     }
 
