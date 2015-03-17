@@ -365,9 +365,12 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<RecyclerView.View
 
     private void onCameraResult() {
         if (cameraDestFile != null && new File(cameraDestFile).exists()) {
+            galleryAddPic();
+            localPreviewPaths.add(0, cameraDestFile);
+            getItemCount();
+            notifyItemInserted(1);
             if (onPictureSelection != null)
                 onPictureSelection.onPictureSelected(cameraDestFile);
-            galleryAddPic();
         } else {
             if (onPictureSelection != null)
                 onPictureSelection.onPictureUnselected();
