@@ -8,9 +8,6 @@ import android.provider.MediaStore;
 
 import java.io.File;
 
-/**
- * Created by sidereo on 16/03/15.
- */
 public class RecentPictureFactory {
     public static final String[] PROJECTIONS = new String[]{
             MediaStore.Images.ImageColumns._ID,

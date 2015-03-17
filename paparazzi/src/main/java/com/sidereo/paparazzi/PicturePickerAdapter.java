@@ -5,8 +5,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.database.Cursor;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -20,9 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.nostra13.universalimageloader.core.DisplayImageOptions;
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,10 +42,9 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     public static final int FILES = 2;
 
     public static final int DEFAULT_PREVIEW_PICTURE_NB = 10;
+    private final Picasso picasso;
 
     private Activity context;
-    private ImageLoader imageLoader;
-    private final DisplayImageOptions imageLoaderOptions;
 
     private int count;
 
@@ -71,12 +66,7 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     PicturePickerAdapter(Activity context, int localPicturesPreview, OnPictureSelection onPictureSelection) {
         this.context = context;
 
-        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(context).build();
-        this.imageLoader = ImageLoader.getInstance();
-        this.imageLoader.init(config);
-        this.imageLoaderOptions = new DisplayImageOptions.Builder()
-                .showImageOnLoading(new ColorDrawable(Color.TRANSPARENT))
-                .build();
+        this.picasso = Picasso.with(context);
 
         this.onPictureSelection = onPictureSelection;
 
@@ -133,7 +123,7 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
             if (openCamera)
                 position--;
             File file = new File(localPreviewPaths.get(position));
-            imageLoader.displayImage(Uri.fromFile(file).toString(), viewHolder.picture, imageLoaderOptions);
+            picasso.load(file).resizeDimen(R.dimen.item_size, R.dimen.item_size).centerInside().into(viewHolder.picture);
         }
     }
 
