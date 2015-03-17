@@ -14,6 +14,8 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -28,7 +30,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdapter.ListItemViewHolder> {
+public class PicturePickerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public static final String LOG = PicturePickerAdapter.class.getSimpleName();
 
     public static final int SCAN_CAMERA_INTENT = 1986;
@@ -94,36 +96,47 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     public int getItemViewType(int position) {
         if (position == 0)
             return CAMERA;
-            // Open files
         else if (position == count - 1)
             return FILES;
-            // Display recent files
         else
             return PREVIEW;
     }
 
     @Override
-    public ListItemViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item, parent, false);
-        return new ListItemViewHolder(itemView);
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        switch (viewType) {
+            case CAMERA:
+                View cameraView = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_camera, parent, false);
+                return new CameraViewHolder(cameraView);
+
+            case PREVIEW:
+                View previewView = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item, parent, false);
+                return new PreviewPicViewHolder(previewView);
+
+            case FILES:
+                View openFilesView = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item, parent, false);
+                return new OpenPicsViewHolder(openFilesView);
+
+            default:
+                return null;
+        }
     }
 
     @Override
-    public void onBindViewHolder(final ListItemViewHolder viewHolder, int position) {
+    public void onBindViewHolder(final RecyclerView.ViewHolder viewHolder, int position) {
         // Open Camera
-        if (position == 0) {
-            viewHolder.picture.setImageResource(R.drawable.ic_photo_camera_grey600_48dp);
+        if (position == CAMERA) {
+            ((CameraViewHolder) viewHolder).setView();
         }
         // Open files
         else if (position == count - 1) {
-            viewHolder.picture.setImageResource(R.drawable.ic_perm_media_grey600_48dp);
+            ((OpenPicsViewHolder) viewHolder).setView();
         }
         // Display recent files
         else {
             if (openCamera)
                 position--;
-            File file = new File(localPreviewPaths.get(position));
-            picasso.load(file).resizeDimen(R.dimen.item_size, R.dimen.item_size).centerInside().into(viewHolder.picture);
+            ((PreviewPicViewHolder) viewHolder).setView(localPreviewPaths.get(position));
         }
     }
 
@@ -141,10 +154,31 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
         return count;
     }
 
-    public class ListItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public class CameraViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        SurfaceView preview;
+        SurfaceHolder previewHolder;
+
+        public CameraViewHolder(View itemView) {
+            super(itemView);
+            preview = (SurfaceView) itemView.findViewById(R.id.picturepicker_item_camera);
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            selectedPos = CAMERA;
+            openCamera();
+        }
+
+        public void setView() {
+            //TODO
+        }
+    }
+
+    public class PreviewPicViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         ImageView picture;
 
-        public ListItemViewHolder(View itemView) {
+        public PreviewPicViewHolder(View itemView) {
             super(itemView);
             picture = (ImageView) itemView.findViewById(R.id.picturepicker_item_picture);
             itemView.setOnClickListener(this);
@@ -153,31 +187,40 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
         @Override
         public void onClick(View v) {
             final int pos = getAdapterPosition();
-
-            int viewType = getItemViewType();
-            switch (viewType) {
-                case CAMERA:
-                    selectedPos = CAMERA;
-                    openCamera();
-                    break;
-
-                case FILES:
-                    selectedPos = FILES;
-                    openFiles();
-                    break;
-
-                case PREVIEW:
-                    if (selectedPos == pos) {
-                        selectedPos = DEFAULT_POS;
-                        if (onPictureSelection != null)
-                            onPictureSelection.onPictureUnselected();
-                    } else {
-                        selectedPos = pos;
-                        if (onPictureSelection != null)
-                            onPictureSelection.onPictureSelected(localPreviewPaths.get(pos - 1));
-                    }
-                    break;
+            if (selectedPos == pos) {
+                selectedPos = DEFAULT_POS;
+                if (onPictureSelection != null)
+                    onPictureSelection.onPictureUnselected();
+            } else {
+                selectedPos = pos;
+                if (onPictureSelection != null)
+                    onPictureSelection.onPictureSelected(localPreviewPaths.get(pos - 1));
             }
+        }
+
+        public void setView(String path) {
+            File file = new File(path);
+            picasso.load(file).resizeDimen(R.dimen.item_size, R.dimen.item_size).centerInside().into(picture);
+        }
+    }
+
+    public class OpenPicsViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        ImageView picture;
+
+        public OpenPicsViewHolder(View itemView) {
+            super(itemView);
+            picture = (ImageView) itemView.findViewById(R.id.picturepicker_item_picture);
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            selectedPos = FILES;
+            openFiles();
+        }
+
+        public void setView() {
+            picture.setImageResource(R.drawable.ic_perm_media_grey600_48dp);
         }
 
     }
