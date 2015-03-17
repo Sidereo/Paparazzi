@@ -36,6 +36,8 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     public static final int SCAN_FILES_INTENT = 1987;
     public static final String IMAGE_MIME_TYPE = "image/*";
 
+    public static final int DEFAULT_POS = -1;
+
     public static final int CAMERA = 0;
     public static final int PREVIEW = 1;
     public static final int FILES = 2;
@@ -88,6 +90,9 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
 
         openCamera = true;
         openFiles = true;
+
+        selectedPos = DEFAULT_POS;
+
     }
 
     @Override
@@ -168,6 +173,7 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
 
                 case PREVIEW:
                     if (selectedPos == pos) {
+                        selectedPos = DEFAULT_POS;
                         if (onPictureSelection != null)
                             onPictureSelection.onPictureUnselected();
                     } else {
