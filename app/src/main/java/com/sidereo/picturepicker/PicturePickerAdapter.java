@@ -3,11 +3,14 @@ package com.sidereo.picturepicker;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -154,17 +157,24 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
             int viewType = getItemViewType();
             switch (viewType) {
                 case CAMERA:
+                    selectedPos = CAMERA;
                     openCamera();
                     break;
 
                 case FILES:
+                    selectedPos = FILES;
                     openFiles();
                     break;
 
                 case PREVIEW:
-                    selectedPos = pos;
-                    if (onPictureSelection != null)
-                        onPictureSelection.onPictureSelected(localPreviewPaths.get(pos - 1));
+                    if (selectedPos == pos) {
+                        if (onPictureSelection != null)
+                            onPictureSelection.onPictureUnselected();
+                    } else {
+                        selectedPos = pos;
+                        if (onPictureSelection != null)
+                            onPictureSelection.onPictureSelected(localPreviewPaths.get(pos - 1));
+                    }
                     break;
             }
         }
@@ -182,6 +192,60 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
         final Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         intent.putExtra(MediaStore.EXTRA_SCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         context.startActivityForResult(intent, SCAN_CAMERA_INTENT);
+    }
+
+    public void onResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == SCAN_CAMERA_INTENT) {
+            if (resultCode == Activity.RESULT_OK) {
+
+            }
+        }
+        else if (requestCode == SCAN_FILES_INTENT) {
+            if (resultCode == Activity.RESULT_OK) {
+
+                final Uri selectedImage = data.getData();
+                String filePath = null;
+
+                Cursor cursor = null;
+                try {
+                    if (DocumentsContract.isDocumentUri(context, selectedImage)) {
+                        String wholeImageId = DocumentsContract.getDocumentId(data.getData());
+                        String imageId = wholeImageId.split(":")[1];
+
+                        String[] projection = { MediaStore.MediaColumns.DATA };
+                        String whereClause = MediaStore.Images.Media._ID + "=?";
+
+                        cursor = context.getContentResolver().query(RecentPictureFactory.getUri(), projection, whereClause, new String[]{imageId}, null);
+                        if (cursor.moveToFirst()) {
+                            final int columnIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                            filePath = cursor.getString(columnIndex);
+                        }
+                    }
+                } finally {
+                    if (cursor != null) {
+                        cursor.close();
+                    }
+                }
+
+                if (TextUtils.isEmpty(filePath)) {
+                    if (onPictureSelection != null)
+                        onPictureSelection.onPictureUnselected();
+                    return;
+                } else if (filePath.startsWith("content://")) {
+                    if (onPictureSelection != null)
+                        onPictureSelection.onPictureUnselected();
+                    return;
+                }
+
+                if (onPictureSelection != null)
+                    onPictureSelection.onPictureSelected(filePath);
+
+            } else {
+                if (onPictureSelection != null)
+                    onPictureSelection.onPictureUnselected();
+            }
+        }
     }
 
 }

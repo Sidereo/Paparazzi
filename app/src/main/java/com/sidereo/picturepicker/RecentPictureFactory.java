@@ -65,7 +65,7 @@ public class RecentPictureFactory {
         return result;
     }
 
-    private static Uri getUri() {
+    public static Uri getUri() {
         String state = Environment.getExternalStorageState();
         if(!state.equalsIgnoreCase(Environment.MEDIA_MOUNTED))
             return MediaStore.Images.Media.INTERNAL_CONTENT_URI;
