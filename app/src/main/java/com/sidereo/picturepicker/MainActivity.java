@@ -64,4 +64,16 @@ public class MainActivity extends ActionBarActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         adapter.onResult(requestCode, resultCode, data);
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        adapter.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        adapter.onPause();
+        super.onPause();
+    }
 }

@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.database.Cursor;
+import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -61,6 +62,11 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<RecyclerView.View
 
     private String cameraDestFile;
 
+    private Camera camera;
+    private boolean cameraConfigured;
+    private SurfaceView preview;
+    private SurfaceHolder previewHolder;
+
     public PicturePickerAdapter(Activity context, OnPictureSelection onPictureSelection) {
         this(context, DEFAULT_PREVIEW_PICTURE_NB, onPictureSelection);
     }
@@ -83,7 +89,7 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<RecyclerView.View
         if (paths.length != this.localPreviews) {
             this.localPreviews = paths.length;
         }
-        localPreviewPaths = new ArrayList<String>(Arrays.asList(paths));
+        localPreviewPaths = new ArrayList<>(Arrays.asList(paths));
 
         openCamera = true;
         openFiles = true;
@@ -156,7 +162,6 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<RecyclerView.View
 
     public class CameraViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         SurfaceView preview;
-        SurfaceHolder previewHolder;
 
         public CameraViewHolder(View itemView) {
             super(itemView);
@@ -171,8 +176,15 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void setView() {
-            //TODO
+            PicturePickerAdapter.this.preview = preview;
+            previewHolder = preview.getHolder();
+            previewHolder.addCallback(surfaceCallback);
+            previewHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+            if (cameraConfigured && camera!=null) {
+                camera.startPreview();
+            }
         }
+
     }
 
     public class PreviewPicViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -233,7 +245,7 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<RecyclerView.View
     }
 
     private void openCamera() {
-        File destFile = null;
+        File destFile;
         try {
             destFile = createCameraImageFile();
         } catch (IOException e) {
@@ -375,6 +387,89 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<RecyclerView.View
             if (onPictureSelection != null)
                 onPictureSelection.onPictureUnselected();
         }
+    }
+
+    public void onResume() {
+        camera = Camera.open();
+        if (cameraConfigured && camera!=null) {
+            camera.startPreview();
+        }
+    }
+
+    public void onPause() {
+        // Cancel the Camera AsyncTask.
+        // TODO mCameraAsyncTask.cancel(true);
+
+        // Release the camera.
+        if (camera != null) {
+            camera.stopPreview();
+            camera.setPreviewCallback(null);
+            camera.release();
+            camera = null;
+        }
+    }
+
+    SurfaceHolder.Callback surfaceCallback=new SurfaceHolder.Callback() {
+        public void surfaceCreated(SurfaceHolder holder) {
+            // no-op -- wait until surfaceChanged()
+        }
+
+        public void surfaceChanged(SurfaceHolder holder,
+                                   int format, int width,
+                                   int height) {
+            initPreview(width, height);
+            if (cameraConfigured && camera!=null) {
+                camera.startPreview();
+            }
+        }
+
+        public void surfaceDestroyed(SurfaceHolder holder) {
+            // no-op
+        }
+    };
+
+    private void initPreview(int width, int height) {
+        if (camera!=null && previewHolder.getSurface()!=null) {
+            try {
+                camera.setPreviewDisplay(previewHolder);
+            }
+            catch (Throwable t) {
+            }
+
+            if (!cameraConfigured) {
+                Camera.Parameters parameters = camera.getParameters();
+                Camera.Size size = getBestPreviewSize(width, height,
+                        parameters);
+
+                if (size!=null) {
+                    parameters.setPreviewSize(size.width, size.height);
+                    camera.setParameters(parameters);
+                    cameraConfigured = true;
+                }
+            }
+        }
+    }
+
+    private Camera.Size getBestPreviewSize(int width, int height, Camera.Parameters parameters) {
+        Camera.Size result=null;
+
+        for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
+            if (size.width<=width && size.height<=height) {
+                if (result==null) {
+                    result=size;
+                }
+                else {
+                    int resultArea=result.width*result.height;
+                    int newArea=size.width*size.height;
+
+                    if (newArea>resultArea) {
+                        result=size;
+                    }
+                }
+            }
+        }
+
+        return(result);
     }
 
 }
