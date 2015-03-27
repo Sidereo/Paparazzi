@@ -1,4 +1,4 @@
-package com.sidereo.paparazzi;
+package com.sidereo.paparazzi.utils;
 
 import android.content.Context;
 import android.database.Cursor;

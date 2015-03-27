@@ -1,4 +1,4 @@
-package com.sidereo.paparazzi;
+package com.sidereo.paparazzi.adapter;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -18,7 +18,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.squareup.picasso.Picasso;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestManager;
+import com.sidereo.paparazzi.R;
+import com.sidereo.paparazzi.listener.Redaction;
+import com.sidereo.paparazzi.utils.RecentPictureFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,36 +43,32 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
 
     public static final int CAMERA = 0;
     public static final int PREVIEW = 1;
-    public static final int FILES = 2;
+    public static final int GALLERY = 2;
 
     public static final int DEFAULT_PREVIEW_PICTURE_NB = 10;
-    private final Picasso picasso;
+    private final RequestManager glide;
 
     private Activity context;
 
     private int count;
 
-    private boolean  openCamera;
-    private boolean  openFiles;
+    private boolean cameraVisible;
+    private boolean galleryVisible;
 
     private int localPreviews;
     private List<String> localPreviewPaths;
 
     private int selectedPos;
-    private OnPictureSelection onPictureSelection;
+    private Redaction redaction;
 
     private String cameraDestFile;
 
-    public PicturePickerAdapter(Activity context, OnPictureSelection onPictureSelection) {
-        this(context, DEFAULT_PREVIEW_PICTURE_NB, onPictureSelection);
-    }
-
-    PicturePickerAdapter(Activity context, int localPicturesPreview, OnPictureSelection onPictureSelection) {
+    public PicturePickerAdapter(Activity context, Redaction onPictureSelection, int localPicturesPreview) {
         this.context = context;
 
-        this.picasso = Picasso.with(context);
+        this.glide = Glide.with(context);
 
-        this.onPictureSelection = onPictureSelection;
+        this.redaction = onPictureSelection;
 
         if (localPicturesPreview < 0) {
             Log.e(LOG, "Invalid number of previewed pictures.");
@@ -83,8 +83,8 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
         }
         localPreviewPaths = new ArrayList<String>(Arrays.asList(paths));
 
-        openCamera = true;
-        openFiles = true;
+        cameraVisible = true;
+        galleryVisible = true;
 
         selectedPos = DEFAULT_POS;
 
@@ -92,11 +92,11 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
 
     @Override
     public int getItemViewType(int position) {
-        if (position == 0)
+        if (cameraVisible && position == 0)
             return CAMERA;
             // Open files
-        else if (position == count - 1)
-            return FILES;
+        else if (galleryVisible && position == count - 1)
+            return GALLERY;
             // Display recent files
         else
             return PREVIEW;
@@ -120,10 +120,11 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
         }
         // Display recent files
         else {
-            if (openCamera)
+            if (cameraVisible) {
                 position--;
+            }
             File file = new File(localPreviewPaths.get(position));
-            picasso.load(file).resizeDimen(R.dimen.item_size, R.dimen.item_size).centerInside().into(viewHolder.picture);
+            glide.load(file).centerCrop().fitCenter().into(viewHolder.picture);
         }
     }
 
@@ -131,10 +132,10 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
     public int getItemCount() {
         int count = localPreviews;
 
-        if (openCamera)
+        if (cameraVisible)
             count++;
 
-        if (openFiles)
+        if (galleryVisible)
             count++;
 
         this.count = count;
@@ -161,20 +162,20 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
                     openCamera();
                     break;
 
-                case FILES:
-                    selectedPos = FILES;
+                case GALLERY:
+                    selectedPos = GALLERY;
                     openFiles();
                     break;
 
                 case PREVIEW:
                     if (selectedPos == pos) {
                         selectedPos = DEFAULT_POS;
-                        if (onPictureSelection != null)
-                            onPictureSelection.onPictureUnselected();
+                        if (redaction != null)
+                            redaction.cancelEverySelection();
                     } else {
                         selectedPos = pos;
-                        if (onPictureSelection != null)
-                            onPictureSelection.onPictureSelected(localPreviewPaths.get(pos - 1));
+                        if (redaction != null)
+                            redaction.pictureSelected(Uri.parse(localPreviewPaths.get(pos - 1)));
                     }
                     break;
             }
@@ -195,8 +196,8 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
             destFile = createCameraImageFile();
         } catch (IOException e) {
             e.printStackTrace();
-            if (onPictureSelection != null)
-                onPictureSelection.onPictureUnselected();
+            if (redaction != null)
+                redaction.cancelEverySelection();
             return;
         }
 
@@ -236,16 +237,16 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
             if (resultCode == Activity.RESULT_OK) {
                 onCameraResult();
             } else {
-                if (onPictureSelection != null)
-                    onPictureSelection.onPictureUnselected();
+                if (redaction != null)
+                    redaction.cancelEverySelection();
             }
         }
         else if (requestCode == SCAN_FILES_INTENT) {
             if (resultCode == Activity.RESULT_OK) {
                 onFilesResult(data);
             } else {
-                if (onPictureSelection != null)
-                    onPictureSelection.onPictureUnselected();
+                if (redaction != null)
+                    redaction.cancelEverySelection();
             }
         }
     }
@@ -290,13 +291,13 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
         }
 
         if (TextUtils.isEmpty(filePath) || filePath.startsWith("content://")) {
-            if (onPictureSelection != null)
-                onPictureSelection.onPictureUnselected();
+            if (redaction != null)
+                redaction.cancelEverySelection();
             return;
         }
 
-        if (onPictureSelection != null)
-            onPictureSelection.onPictureSelected(filePath);
+        if (redaction != null)
+            redaction.pictureSelected(Uri.parse(filePath));
     }
 
     private String getPicturesDocumentsPathBeforeKitKat(Uri selectedImage) {
@@ -322,13 +323,12 @@ public class PicturePickerAdapter extends RecyclerView.Adapter<PicturePickerAdap
 
     private void onCameraResult() {
         if (cameraDestFile != null && new File(cameraDestFile).exists()) {
-            if (onPictureSelection != null)
-                onPictureSelection.onPictureSelected(cameraDestFile);
+            if (redaction != null)
+                redaction.pictureSelected(Uri.parse(cameraDestFile));
             galleryAddPic();
         } else {
-            if (onPictureSelection != null)
-                onPictureSelection.onPictureUnselected();
+            if (redaction != null)
+                redaction.cancelEverySelection();
         }
     }
-
 }
