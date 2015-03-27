@@ -3,10 +3,11 @@
     android:layout_width="@dimen/item_size"
     android:layout_marginLeft="5dp"
     android:layout_marginRight="5dp"
+    android:padding="20dp"
     android:layout_height="match_parent">
+
     <ImageView
-        android:id="@+id/picturepicker_item_picture"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop"/>
+        android:src="@drawable/ic_photo_camera_grey600_48dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 </RelativeLayout>

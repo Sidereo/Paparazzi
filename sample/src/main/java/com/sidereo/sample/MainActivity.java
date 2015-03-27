@@ -1,4 +1,4 @@
-package com.sidereo.paparazzi;
+package com.sidereo.sample;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -7,26 +7,25 @@ import android.support.v7.app.ActionBarActivity;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
-import com.sidereo.paparazzi.adapter.PicturePickerAdapter;
 import com.sidereo.paparazzi.listener.Redaction;
 import com.sidereo.paparazzi.view.Paparazzi;
 
 public class MainActivity extends ActionBarActivity implements Redaction {
     Paparazzi paparazzi;
-    PicturePickerAdapter adapter;
 
     ImageView selectedImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(com.sidereo.picturepicker.R.layout.activity_main);
+        setContentView(com.sidereo.sample.R.layout.activity_main);
 
-        selectedImageView = (ImageView) findViewById(com.sidereo.picturepicker.R.id.selectedPicture);
+        selectedImageView = (ImageView) findViewById(com.sidereo.sample.R.id.selectedPicture);
 
-        paparazzi = (Paparazzi) findViewById(com.sidereo.picturepicker.R.id.paparazzi);
+        paparazzi = (Paparazzi) findViewById(com.sidereo.sample.R.id.paparazzi);
 
-        paparazzi.prepare(this).disableCamera().shoot();
+        paparazzi.prepare(this).shoot();
+//        paparazzi.prepare(this).disableCamera().disableGallery().shoot();
     }
 
     @Override
@@ -41,7 +40,7 @@ public class MainActivity extends ActionBarActivity implements Redaction {
 
     @Override
     public void cancelEverySelection() {
-        selectedImageView.setImageResource(com.sidereo.picturepicker.R.drawable.ic_image_grey600_48dp);
+        selectedImageView.setImageResource(com.sidereo.sample.R.drawable.ic_image_grey600_48dp);
     }
 
 }

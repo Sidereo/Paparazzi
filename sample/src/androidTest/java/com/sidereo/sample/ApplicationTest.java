@@ -1,4 +1,4 @@
-package com.sidereo.picturepicker;
+package com.sidereo.sample;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
