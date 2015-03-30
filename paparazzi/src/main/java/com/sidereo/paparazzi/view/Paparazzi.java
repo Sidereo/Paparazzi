@@ -26,7 +26,6 @@ public class Paparazzi extends RecyclerView implements PictureAdapter.Listener {
     public static final String IMAGE_MIME_TYPE = "image/*";
     public static final int SCAN_CAMERA_INTENT = 1986;
     public static final int SCAN_FILES_INTENT = 1987;
-    private String cameraDestFile;
 
     private int pictureNumber;
     private PictureAdapter adapter;
@@ -38,6 +37,7 @@ public class Paparazzi extends RecyclerView implements PictureAdapter.Listener {
     private boolean wantsCamera = true;
     private boolean wantsGallery = true;
     private CameraUtils cameraUtils;
+    private File destFile;
 
     public Paparazzi(Context context) {
         super(context);
@@ -62,6 +62,11 @@ public class Paparazzi extends RecyclerView implements PictureAdapter.Listener {
         }
     }
 
+    /**
+     * Prepare Paparazzi using Activity.
+     * @param activity must implement com.sidereo.paparazzi.listener.Redaction
+     * @return the Paparazi instance for chaining method
+     */
     public Paparazzi prepare(Activity activity) {
         this.activity = activity;
         setHasFixedSize(true);
@@ -78,6 +83,9 @@ public class Paparazzi extends RecyclerView implements PictureAdapter.Listener {
         return this;
     }
 
+    /**
+     * Build method. Use when the Paparazzi instance has been prepared.
+     */
     public void shoot() {
         setLayoutManager(layoutManager);
         if (activity instanceof Redaction) {
@@ -89,6 +97,11 @@ public class Paparazzi extends RecyclerView implements PictureAdapter.Listener {
         setAdapter(adapter);
     }
 
+    /**
+     * Build method. Use when the Paparazzi instance hasn't been prepared.
+     * @param activity the activity. Needed to startActivityForResult (camera intent)
+     * @param redaction the listener.
+     */
     public void shoot(Activity activity, Redaction redaction) {
         setLayoutManager(layoutManager);
         if (redaction == null && activity instanceof Redaction) {
@@ -103,50 +116,13 @@ public class Paparazzi extends RecyclerView implements PictureAdapter.Listener {
         setAdapter(adapter);
     }
 
+    /**
+     * Call from onActivityResult of your activity with the same params.
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
     public void printPhotos(int requestCode, int resultCode, Intent data) {
-        onResult(requestCode, resultCode, data);
-    }
-
-    public Paparazzi disableCamera() {
-        wantsCamera = false;
-        return this;
-    }
-
-    public Paparazzi disableGallery() {
-        wantsGallery = false;
-        return this;
-    }
-
-    @Override
-    public void openFiles() {
-        final Intent intent = new Intent();
-        intent.setType(IMAGE_MIME_TYPE);
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        activity.startActivityForResult(intent, SCAN_FILES_INTENT);
-    }
-
-    @Override
-    public void openCamera() {
-        File destFile;
-        try {
-            destFile = cameraUtils.createCameraImageFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-            if (redaction != null) {
-                redaction.cancelEverySelection();
-            }
-            return;
-        }
-
-        final Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        intent.putExtra(MediaStore.EXTRA_SCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(destFile));
-        activity.startActivityForResult(intent, SCAN_CAMERA_INTENT);
-    }
-
-
-    public void onResult(int requestCode, int resultCode, Intent data) {
-
         if (requestCode == SCAN_CAMERA_INTENT) {
             if (resultCode == Activity.RESULT_OK) {
                 onCameraResult();
@@ -164,12 +140,56 @@ public class Paparazzi extends RecyclerView implements PictureAdapter.Listener {
         }
     }
 
+    /**
+     * Remove the camera item from the list.
+     * @return the Paparazi instance for chaining method
+     */
+    public Paparazzi disableCamera() {
+        wantsCamera = false;
+        return this;
+    }
+
+    /**
+     * Remove the gallery item from the list.
+     * @return the Paparazi instance for chaining method
+     */
+    public Paparazzi disableGallery() {
+        wantsGallery = false;
+        return this;
+    }
+
+    @Override
+    public void openFiles() {
+        final Intent intent = new Intent();
+        intent.setType(IMAGE_MIME_TYPE);
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        activity.startActivityForResult(intent, SCAN_FILES_INTENT);
+    }
+
+    @Override
+    public void openCamera() {
+        try {
+            destFile = cameraUtils.createCameraImageFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+            if (redaction != null) {
+                redaction.cancelEverySelection();
+            }
+            return;
+        }
+
+        final Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.putExtra(MediaStore.EXTRA_SCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(destFile));
+        activity.startActivityForResult(intent, SCAN_CAMERA_INTENT);
+    }
+
     private void onCameraResult() {
-        if (cameraDestFile != null && new File(cameraDestFile).exists()) {
+        if (destFile != null && destFile.exists()) {
             cameraUtils.addPictureToGallery();
-            adapter.add(0, cameraDestFile);
+            adapter.add(0, destFile);
             if (redaction != null)
-                redaction.pictureSelected(Uri.parse(cameraDestFile));
+                redaction.pictureSelected(destFile);
         } else if (redaction != null) {
             redaction.cancelEverySelection();
         }
@@ -193,7 +213,7 @@ public class Paparazzi extends RecyclerView implements PictureAdapter.Listener {
         }
 
         if (redaction != null) {
-            redaction.pictureSelected(Uri.parse(filePath));
+            redaction.pictureSelected(new File(filePath));
         }
     }
 }

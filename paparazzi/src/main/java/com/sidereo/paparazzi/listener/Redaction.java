@@ -1,10 +1,10 @@
 package com.sidereo.paparazzi.listener;
 
-import android.net.Uri;
+import java.io.File;
 
 public interface Redaction {
 
-    public void pictureSelected(Uri fileUri);
+    public void pictureSelected(File file);
     public void cancelEverySelection();
 
 }

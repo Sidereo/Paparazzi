@@ -1,7 +1,6 @@
 package com.sidereo.sample;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.widget.ImageView;
@@ -9,6 +8,8 @@ import android.widget.ImageView;
 import com.bumptech.glide.Glide;
 import com.sidereo.paparazzi.listener.Redaction;
 import com.sidereo.paparazzi.view.Paparazzi;
+
+import java.io.File;
 
 public class MainActivity extends ActionBarActivity implements Redaction {
     Paparazzi paparazzi;
@@ -34,8 +35,8 @@ public class MainActivity extends ActionBarActivity implements Redaction {
     }
 
     @Override
-    public void pictureSelected(Uri uri) {
-        Glide.with(MainActivity.this).load(uri.getPath()).into(selectedImageView);
+    public void pictureSelected(File file) {
+        Glide.with(MainActivity.this).load(file).into(selectedImageView);
     }
 
     @Override

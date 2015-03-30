@@ -35,8 +35,8 @@ public class RecentPictureFactory {
         return count;
     }
 
-    public static String[] getPicturesPath(Context context, int size) {
-        String[] result = new String[size];
+    public static File[] getPictureFiles(Context context, int size) {
+        File[] result = new File[size];
         Cursor cursor = null;
 
         try {
@@ -45,11 +45,10 @@ public class RecentPictureFactory {
 
 
             for(int i=0 ; i<size && cursor.moveToNext() ; i++) {
-                result[i] = cursor.getString(cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA));
+                result[i] = new File(cursor.getString(cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA)));
 
                 // Check if image exist, otherwise go to the next row
-                File imageFile = new File(result[i]);
-                if (!imageFile.exists())
+                if (!result[i].exists())
                     i--;
             }
 

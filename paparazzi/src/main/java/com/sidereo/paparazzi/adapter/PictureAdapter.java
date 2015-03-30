@@ -1,7 +1,6 @@
 package com.sidereo.paparazzi.adapter;
 
 import android.app.Activity;
-import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -41,7 +40,7 @@ public class PictureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private boolean galleryVisible;
 
     private int localPreviews;
-    private List<String> localPreviewPaths;
+    private List<File> localPreviewFiles;
 
     private int selectedPos;
     private Redaction redaction;
@@ -59,11 +58,11 @@ public class PictureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             this.localPreviews = localPicturesPreview;
         }
 
-        String[] paths = RecentPictureFactory.getPicturesPath(context, this.localPreviews);
-        if (paths.length != this.localPreviews) {
-            this.localPreviews = paths.length;
+        File[] files = RecentPictureFactory.getPictureFiles(context, this.localPreviews);
+        if (files.length != this.localPreviews) {
+            this.localPreviews = files.length;
         }
-        localPreviewPaths = new ArrayList<>(Arrays.asList(paths));
+        localPreviewFiles = new ArrayList<>(Arrays.asList(files));
 
         cameraVisible = wantsCamera;
         galleryVisible = wantsGallery;
@@ -119,10 +118,10 @@ public class PictureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             if (cameraVisible) {
                 position--;
             }
-            File file = new File(localPreviewPaths.get(position));
+            File file = localPreviewFiles.get(position);
             glide.load(file).centerCrop().fitCenter().into(((PreviewPicViewHolder)viewHolder).picture);
 
-            ((PreviewPicViewHolder) viewHolder).setView(localPreviewPaths.get(position));
+            ((PreviewPicViewHolder) viewHolder).setView(localPreviewFiles.get(position));
         }
     }
 
@@ -140,8 +139,8 @@ public class PictureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         return count;
     }
 
-    public void add(int position, String item) {
-        localPreviewPaths.add(position, item);
+    public void add(int position, File item) {
+        localPreviewFiles.add(position, item);
         notifyItemInserted(position);
     }
 
@@ -167,14 +166,13 @@ public class PictureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             picture = (ImageView) itemView.findViewById(R.id.picturepicker_item_picture);
         }
 
-        public void setView(final String path) {
-            File file = new File(path);
+        public void setView(final File file) {
             glide.load(file).fitCenter().centerCrop().into(picture);
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if (redaction != null) {
-                        redaction.pictureSelected(Uri.parse(path));
+                        redaction.pictureSelected(file);
                     }
                     setNewPositionOrCancelSelection();
                 }
