@@ -1,8 +1,13 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: "com.jfrog.bintray"
+
+// library version
+version = "1.0.0"
 
 android {
     compileSdkVersion 22
-    buildToolsVersion "22.0.0"
+    buildToolsVersion "22.0.1"
 
     defaultConfig {
         minSdkVersion 15
@@ -25,4 +30,81 @@ dependencies {
 
     compile 'com.android.support:support-v4:22.0.0'
     compile 'com.github.bumptech.glide:glide:3.5.2'
+}
+
+// jcenter & maven config
+
+def siteUrl = 'https://github.com/Sidereo/Paparazzi'
+def gitUrl = 'https://github.com/Sidereo/Paparazzi.git'
+group = "com.sidereo.paparazzi"  // Maven Group ID for the artifact
+
+
+install {
+    repositories.mavenInstaller {
+        // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+
+                // Add your description here
+                name 'Paparazzi'
+                description = 'Android library to display an horizontal list with recent pictures preview + take a picture + open recent file features.'
+                url siteUrl
+
+                // Set your license
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'dommerq'
+                        name 'Quentin Dommerc'
+                        email 'k@sidereo.com'
+                    }
+                    developer {
+                        id 'loutry'
+                        name 'Marion Hayoun'
+                        email 'm@sidereo.com'
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+
+                }
+            }
+        }
+    }
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+
+    configurations = ['archives']
+    pkg {
+        repo = "maven"
+        name = "Paparazzi"
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = ["Apache-2.0"]
+        publish = true
+    }
 }
