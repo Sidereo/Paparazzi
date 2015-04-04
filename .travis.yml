@@ -3,7 +3,7 @@ language: android
 jdk: oraclejdk7
 
 notifications:
-  email: false
+  email: true
 
 android:
   components:
