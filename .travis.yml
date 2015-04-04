@@ -2,6 +2,9 @@ language: android
 
 jdk: oraclejdk7
 
+notifications:
+  email: false
+
 android:
   components:
     - build-tools-22.0.1
