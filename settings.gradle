@@ -1,1 +1,1 @@
-include ':sample', ':paparazzi'
+include ':sample', ':library'
