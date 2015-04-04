@@ -1,4 +1,4 @@
-# Paparazzi
+# Paparazzi [![Build Status](https://travis-ci.org/Sidereo/Paparazzi.svg?branch=master)](https://travis-ci.org/Sidereo/Paparazzi)
 
 Do you need to include a picture picker in your activity?
 
