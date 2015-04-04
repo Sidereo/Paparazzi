@@ -93,18 +93,21 @@ artifacts {
 
 bintray {
     Properties properties = new Properties()
-    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    File file = new File("local.properties")
+    if (file.exists()) {
+        properties.load(project.rootProject.file('local.properties').newDataInputStream())
 
-    user = properties.getProperty("bintray.user")
-    key = properties.getProperty("bintray.apikey")
+        user = properties.getProperty("bintray.user")
+        key = properties.getProperty("bintray.apikey")
 
-    configurations = ['archives']
-    pkg {
-        repo = "maven"
-        name = "Paparazzi"
-        websiteUrl = siteUrl
-        vcsUrl = gitUrl
-        licenses = ["Apache-2.0"]
-        publish = true
+        configurations = ['archives']
+        pkg {
+            repo = "maven"
+            name = "Paparazzi"
+            websiteUrl = siteUrl
+            vcsUrl = gitUrl
+            licenses = ["Apache-2.0"]
+            publish = true
+        }
     }
 }
