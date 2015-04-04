@@ -4,7 +4,7 @@ import java.io.File;
 
 public interface Redaction {
 
-    public void pictureSelected(File file);
-    public void cancelEverySelection();
+    void pictureSelected(File file);
+    void cancelEverySelection();
 
 }
