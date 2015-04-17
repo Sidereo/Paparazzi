@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="paparazzi">
+        <attr name="paparazzi__pictureNumber" format="integer"/>
+        <attr name="paparazzi__type" format="string">
+            <enum name="grid" value="0"/>
+            <enum name="list" value="1" />
+        </attr>
+        <attr name="paparazzi__columns" format="integer"/>
+
+    </declare-styleable>
+</resources>

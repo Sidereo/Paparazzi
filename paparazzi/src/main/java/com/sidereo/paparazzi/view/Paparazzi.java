@@ -8,6 +8,7 @@ import android.content.res.TypedArray;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -33,11 +34,13 @@ public class Paparazzi extends RecyclerView implements PictureAdapter.Listener {
     private Activity activity;
     private Redaction redaction;
 
-    private LinearLayoutManager layoutManager;
+    private LayoutManager layoutManager;
     private boolean wantsCamera = true;
     private boolean wantsGallery = true;
     private CameraUtils cameraUtils;
     private File destFile;
+    private int columns;
+    private String type;
 
     public Paparazzi(Context context) {
         super(context);
@@ -57,6 +60,8 @@ public class Paparazzi extends RecyclerView implements PictureAdapter.Listener {
         TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.paparazzi);
         try {
             pictureNumber = a.getInt(R.styleable.paparazzi_paparazzi__pictureNumber, 10);
+            columns = a.getInt(R.styleable.paparazzi_paparazzi__columns, 3);
+            type = a.getString(R.styleable.paparazzi_paparazzi__type);
         } finally {
             a.recycle();
         }
@@ -70,8 +75,13 @@ public class Paparazzi extends RecyclerView implements PictureAdapter.Listener {
     public Paparazzi prepare(Activity activity) {
         this.activity = activity;
         setHasFixedSize(true);
-        layoutManager = new LinearLayoutManager(activity);
-        layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+
+        if (type != null) {
+            layoutManager = new GridLayoutManager(activity, columns, GridLayoutManager.VERTICAL, false);
+        } else {
+            layoutManager = new LinearLayoutManager(activity);
+            ((LinearLayoutManager) layoutManager).setOrientation(LinearLayoutManager.HORIZONTAL);
+        }
 
         cameraUtils = CameraUtils.newInstance(activity);
         return this;
@@ -79,7 +89,7 @@ public class Paparazzi extends RecyclerView implements PictureAdapter.Listener {
 
     // Not really ready yet.
     private Paparazzi usingOrientation(int orientation) {
-        layoutManager.setOrientation(orientation);
+        ((LinearLayoutManager) layoutManager).setOrientation(orientation);
         return this;
     }
 
