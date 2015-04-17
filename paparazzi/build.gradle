@@ -3,7 +3,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: "com.jfrog.bintray"
 
 // library version
-version = "1.0.0"
+version = "1.1.0"
 
 android {
     compileSdkVersion 22
@@ -104,6 +104,7 @@ bintray {
         pkg {
             repo = "maven"
             name = "Paparazzi"
+            userOrg = "sidereo"
             websiteUrl = siteUrl
             vcsUrl = gitUrl
             licenses = ["Apache-2.0"]

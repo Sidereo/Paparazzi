@@ -1,4 +1,4 @@
-# Paparazzi [![Build Status](https://travis-ci.org/Sidereo/Paparazzi.svg?branch=master)](https://travis-ci.org/Sidereo/Paparazzi)
+# Paparazzi [![Build Status](https://travis-ci.org/Sidereo/Paparazzi.svg?branch=master)](https://travis-ci.org/Sidereo/Paparazzi) [![Version](https://api.bintray.com/packages/sidereo/maven/Paparazzi/images/download.svg)](https://bintray.com/sidereo/maven/Paparazzi/_latestVersion)
 
 Do you need to include a picture picker in your activity?
 
@@ -16,6 +16,8 @@ Like a horizontal list of recent pictures and the possibility to open the camera
 
   <com.sidereo.paparazzi.view.Paparazzi
     paparazzi:paparazzi__pictureNumber="40"
+    paparazzi:paparazzi__type="grid" // or list
+    paparazzi:paparazzi__columns="3" // if using grid
     android:id="@+id/paparazzi"
     android:clipToPadding="false"
     android:layout_width="match_parent"
@@ -23,7 +25,6 @@ Like a horizontal list of recent pictures and the possibility to open the camera
 
 
 ```
-Of course, you can customize `paparazzi:paparazzi__pictureNumber` value to fit your needs ;)
 
 When you're done, get the View into a variable and then:
 
@@ -41,7 +42,7 @@ paparazzi.prepare(this).disableCamera().disableGallery().shoot();
 
 **Gradle**
 ```groovy
-compile 'com.sidereo:paparazzi:1.0.0'
+compile 'com.sidereo:paparazzi:1.1.0'
 ```
 **Maven**
 
